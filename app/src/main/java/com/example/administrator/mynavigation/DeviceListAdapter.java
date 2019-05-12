@@ -1,6 +1,8 @@
 package com.example.administrator.mynavigation;
 
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +38,13 @@ public class DeviceListAdapter extends BaseAdapter implements Comparator<SearchR
         notifyDataSetChanged();
     }
 
+    public void addDataList(List<SearchResult> datas) {
+        mDataList.clear();
+        mDataList.addAll(datas);
+        Collections.sort(mDataList, this);
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getCount() {
         return mDataList.size();
@@ -61,6 +70,7 @@ public class DeviceListAdapter extends BaseAdapter implements Comparator<SearchR
         TextView mac;
         TextView rssi;
         TextView adv;
+        TextView record;
     }
 
     @Override
@@ -76,6 +86,8 @@ public class DeviceListAdapter extends BaseAdapter implements Comparator<SearchR
             holder.mac = (TextView) convertView.findViewById(R.id.mac);
             holder.rssi = (TextView) convertView.findViewById(R.id.rssi);
             holder.adv = (TextView) convertView.findViewById(R.id.adv);
+            holder.record = (TextView) convertView.findViewById(R.id.record);
+
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -88,9 +100,11 @@ public class DeviceListAdapter extends BaseAdapter implements Comparator<SearchR
         holder.rssi.setText(String.format("Rssi: %d", result.rssi));
 
         Beacon beacon = new Beacon(result.scanRecord);
+        Log.e("beacon",beacon.toString());
+        //String record=ScanRecordUtil.parseFromBytes(result.scanRecord).toString();
         holder.adv.setText(beacon.toString());
 
-       /* convertView.setOnClickListener(new View.OnClickListener() {
+        convertView.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -99,7 +113,7 @@ public class DeviceListAdapter extends BaseAdapter implements Comparator<SearchR
                 intent.putExtra("mac", result.getAddress());
                 mContext.startActivity(intent);
             }
-        });*/
+        });
 
         return convertView;
     }

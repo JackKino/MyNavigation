@@ -47,5 +47,12 @@
         android:layout_marginTop="3dp"
         android:textSize="14sp"
         android:textColor="#aaaaaa"/>
+    <TextView
+        android:id="@+id/record"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:textSize="14sp"
+        android:textColor="#333333"/>
 
 </LinearLayout>

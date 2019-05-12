@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".DeviceDetailActivity">
+
+    <TextView
+        android:id="@+id/bluedetail_mac"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="本机蓝牙mac地址"
+        android:background="#000000"
+        android:textColor="@color/colorPrimary"
+        android:textSize="20sp"
+        android:gravity="center"
+        />
+
+        <Button
+            android:id="@+id/bluedetail_unlock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="开锁"
+            />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        >
+        <Button
+            android:id="@+id/bluedetail_lock"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="设置密码"
+            android:padding="10dp"
+            />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="6dp"
+            android:hint="请输入密码"
+            />
+
+    </LinearLayout>
+    <Button
+        android:id="@+id/bluedetail_getnotify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="接收数据"
+        />
+
+    <Button
+        android:id="@+id/bluedetail_setData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="发送数据"
+        />
+
+
+</LinearLayout>
