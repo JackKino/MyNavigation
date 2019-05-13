@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.ParcelUuid;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -249,9 +248,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.main_unlock:
-                ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
+               /* ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
 
-                Log.e(TAG, "开启广播");
+                Log.e(TAG, "开启广播");*/
+                Intent intent = new Intent();
+                intent.setClass(this, DeviceDetailActivity.class);
+                intent.putExtra("mac", "测试");
+                startActivity(intent);
                 break;
         }
     }

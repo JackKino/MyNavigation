@@ -15,19 +15,17 @@ import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.os.ParcelUuid;
+import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inuker.bluetooth.library.beacon.Beacon;
-import com.inuker.bluetooth.library.beacon.BeaconItem;
-import com.inuker.bluetooth.library.beacon.BeaconParser;
-import com.inuker.bluetooth.library.connect.response.BleReadResponse;
 import com.inuker.bluetooth.library.search.SearchRequest;
 import com.inuker.bluetooth.library.search.SearchResult;
 import com.inuker.bluetooth.library.search.response.SearchResponse;
@@ -58,6 +56,8 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     private BluetoothDevice bluetoothDevice;
     private BluetoothGattCharacteristic characterWrite;
     private AlertDialog dialog;
+    private boolean isShowDialog1=true;
+    private boolean isShowDialog2=true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +92,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void searchDevice() {
+        isShowDialog1=true;
         SearchRequest request = new SearchRequest.Builder()
                 .searchBluetoothLeDevice(30000, 1).build();
 
@@ -142,13 +143,24 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                     Toast.makeText(DeviceDetailActivity.this, "开锁回复ACK", Toast.LENGTH_SHORT).show();
                                     ClientManager.getClient().unlock(createAdvertiseData2(),mAdvertiseCallback);
                                     dialog.dismiss();
+                                    new Handler().postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            stopAdvertise();
+                                        }
+                                    },5000);
+                                    //isShowDialog1=true;
                                 }
                             });
                             if(dialog==null) {
                                 dialog = builder.create();
                             }
                             if(!dialog.isShowing()) {
-                                dialog.show();
+                                if(isShowDialog1){
+                                    dialog.show();
+                                    isShowDialog1=false;
+                                }
+
                             }
                         }
                     });
@@ -196,6 +208,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        stopAdvertise();
                         AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
                         builder.setMessage("开锁成功");
                         // builder.setIcon(R.mipmap.ic_launcher_round);
@@ -205,15 +218,19 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                         builder.setPositiveButton("好的", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                stopAdvertise();
+
                                 dialog.dismiss();
+                                //isShowDialog2=true;
                             }
                         });
                         if(dialog==null) {
                             dialog = builder.create();
                         }
                         if(!dialog.isShowing()) {
-                            dialog.show();
+                            if(isShowDialog2){
+                                dialog.show();
+                                isShowDialog2=false;
+                            }
                         }
                     }
                 });
@@ -514,4 +531,10 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     }
 
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        return super.onKeyDown(keyCode, event);
+
+    }
 }
