@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void searchDevice() {
         SearchRequest request = new SearchRequest.Builder()
-                .searchBluetoothClassicDevice(10000, 1).build();
+                .searchBluetoothLeDevice(10000, 1).build();
 
         ClientManager.getClient().search(request, mSearchResponse);
     }
@@ -272,8 +272,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
         // mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
         mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
-        mDataBuilder.setIncludeTxPowerLevel(true);
-        mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
+     //   mDataBuilder.setIncludeTxPowerLevel(true);
+     //   mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
         mDataBuilder.addManufacturerData(0x01AC, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
