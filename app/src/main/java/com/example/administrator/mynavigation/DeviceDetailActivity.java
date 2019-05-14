@@ -58,6 +58,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     private AlertDialog dialog;
     private boolean isShowDialog1=true;
     private boolean isShowDialog2=true;
+    private Button bluedetail_closeadvertise;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +72,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         bluedetail_getnotify.setOnClickListener(this);
         bluedetail_setData=findViewById(R.id.bluedetail_setData);
         bluedetail_setData.setOnClickListener(this);
+        bluedetail_closeadvertise=findViewById(R.id.bluedetail_closeadvertise);
+        bluedetail_closeadvertise.setOnClickListener(this);
+
 
         mac=getIntent().getExtras().getString("mac");
         bluedetail_mac.setText(mac);
@@ -395,14 +399,19 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             super.onStartFailure(errorCode);
             Log.e(TAG, "onStartFailure errorCode" + errorCode);//返回的错误码
             if (errorCode == ADVERTISE_FAILED_DATA_TOO_LARGE) {
+                Toast.makeText(DeviceDetailActivity.this,"数据大于31个字节",Toast.LENGTH_LONG).show();
                 Log.e(TAG, "数据大于31个字节");
             } else if (errorCode == ADVERTISE_FAILED_TOO_MANY_ADVERTISERS) {
+                Toast.makeText(DeviceDetailActivity.this,"未能开始广播，没有广播实例",Toast.LENGTH_LONG).show();
                 Log.e(TAG, "未能开始广播，没有广播实例");
             } else if (errorCode == ADVERTISE_FAILED_ALREADY_STARTED) {
+                Toast.makeText(DeviceDetailActivity.this,"正在连接的，无法再次连接",Toast.LENGTH_LONG).show();
                 Log.e(TAG, "正在连接的，无法再次连接");
             } else if (errorCode == ADVERTISE_FAILED_INTERNAL_ERROR) {
+                Toast.makeText(DeviceDetailActivity.this,"由于内部错误操作失败",Toast.LENGTH_LONG).show();
                 Log.e(TAG, "由于内部错误操作失败");
             } else if (errorCode == ADVERTISE_FAILED_FEATURE_UNSUPPORTED) {
+                Toast.makeText(DeviceDetailActivity.this,"不支持此功能",Toast.LENGTH_LONG).show();
                 Log.e(TAG, "不支持此功能");
             }
         }
@@ -504,7 +513,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 //开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
                // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
                 mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
-
+                searchDevice2();
 
                 // ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
                // searchDevice2();
@@ -525,6 +534,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             case R.id.bluedetail_setData:
                 ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
                 searchDevice2();
+                break;
+            case R.id.bluedetail_closeadvertise:
+                stopAdvertise();
                 break;
         }
 
