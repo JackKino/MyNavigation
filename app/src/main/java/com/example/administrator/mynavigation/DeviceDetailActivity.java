@@ -61,6 +61,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     private boolean isShowDialog2=true;
     private Button bluedetail_closeadvertise;
     private EditText set_pwd,put_pwd;
+    private Handler handler=new Handler();
+    private String save_pwd;
+    private boolean isUnlock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,25 +101,20 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "支持BLE Peripheral");
         }
 
-
-
+        save_pwd= (String) SharedPreferencesUtils.getParam(this,"String","pwd");
+        searchDevice();
 
     }
 
     private void searchDevice() {
         isShowDialog1=true;
         SearchRequest request = new SearchRequest.Builder()
-                .searchBluetoothLeDevice(30000, 1).build();
+                .searchBluetoothLeDevice(60000, 1).build();
 
         ClientManager.getClient().search(request, mSearchResponse);
     }
 
-    private void searchDevice2() {
-        SearchRequest request = new SearchRequest.Builder()
-                .searchBluetoothLeDevice(10000, 1).build();
 
-        ClientManager.getClient().search(request, mSearchResponse2);
-    }
 
 
     private final SearchResponse mSearchResponse = new SearchResponse() {
@@ -137,30 +135,30 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                // BluetoothLog.v(String.format("beacon for %s\n%s", device.getAddress(), beacon.toString()));
                 byte[] mBytes = ByteUtils.trimLast(device.scanRecord);
 
-            if(ByteUtils.byteToString(mBytes).endsWith("3456")){
-
+            if(ByteUtils.byteToString(mBytes).contains("AB")){
+                SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
                 Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
-                            builder.setMessage("收到开锁命令");
+                            builder.setMessage("收到设置密码命令");
                             // builder.setIcon(R.mipmap.ic_launcher_round);
                             //点击对话框以外的区域是否让对话框消失
                             builder.setCancelable(false);
                             //设置正面按钮
-                            builder.setPositiveButton("回复", new DialogInterface.OnClickListener() {
+                            builder.setPositiveButton("设置", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Toast.makeText(DeviceDetailActivity.this, "开锁回复ACK", Toast.LENGTH_SHORT).show();
-                                    ClientManager.getClient().unlock(createAdvertiseData2(),mAdvertiseCallback);
+                                    Toast.makeText(DeviceDetailActivity.this, "设置密码ACK", Toast.LENGTH_SHORT).show();
+                                    ClientManager.getClient().unlock(setPwdData_ack(),mAdvertiseCallback);
                                     dialog.dismiss();
                                     new Handler().postDelayed(new Runnable() {
                                         @Override
                                         public void run() {
                                             stopAdvertise();
                                         }
-                                    },5000);
+                                    },3000);
                                     //isShowDialog1=true;
                                 }
                             });
@@ -180,41 +178,138 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
                 }
 
-        }
-
-        @Override
-        public void onSearchStopped() {
-            Log.e("onDeviceFounded","onSearchStopped");
-
-        }
-
-        @Override
-        public void onSearchCanceled() {
-            Log.e("onDeviceFounded","onSearchCanceled");
-
-
-        }
-    };
-
-    private final SearchResponse mSearchResponse2 = new SearchResponse() {
-        @Override
-        public void onSearchStarted() {
-            Log.e("onDeviceFounded","started");
-            BluetoothLog.w("MainActivity.onSearchStarted");
-
-        }
-
-        @Override
-        public void onDeviceFounded(SearchResult device) {
-
-//            BluetoothLog.w("MainActivity.onDeviceFounded " + device.device.getAddress());
-
-
-            Beacon beacon = new Beacon(device.scanRecord);
-            // BluetoothLog.v(String.format("beacon for %s\n%s", device.getAddress(), beacon.toString()));
-            byte[] mBytes = ByteUtils.trimLast(device.scanRecord);
-
             if(ByteUtils.byteToString(mBytes).endsWith("4567")){
+
+                Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopAdvertise();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
+                        builder.setMessage("设置密码成功");
+                        // builder.setIcon(R.mipmap.ic_launcher_round);
+                        //点击对话框以外的区域是否让对话框消失
+                        builder.setCancelable(false);
+                        //设置正面按钮
+                        builder.setPositiveButton("好的", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                dialog.dismiss();
+                                //isShowDialog2=true;
+                            }
+                        });
+                        if(dialog==null) {
+                            dialog = builder.create();
+                        }
+                        if(!dialog.isShowing()) {
+                            if(isShowDialog2){
+                                dialog.show();
+                                isShowDialog2=false;
+                            }
+                        }
+                    }
+                });
+
+
+            }
+
+
+            if(ByteUtils.byteToString(mBytes).contains("AC")) {
+                isUnlock=false;
+                if (mac.equals("") || mac == null) {
+                    Toast.makeText(DeviceDetailActivity.this, "你还没有设置密码，请先设置密码！", Toast.LENGTH_SHORT).show();
+
+                } else {
+                    if(mac.equals(ByteUtils.byteToString(mBytes))) {
+                        isUnlock=true;
+                        SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
+                        Log.e("onDeviceFounded", "onDeviceFounded" + device.getName() + " address==" + device.getAddress() + "   " + ByteUtils.byteToString(mBytes));
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
+                                builder.setTitle("收到开锁命令");
+                                builder.setMessage("开锁成功");
+                                // builder.setIcon(R.mipmap.ic_launcher_round);
+                                //点击对话框以外的区域是否让对话框消失
+                                builder.setCancelable(false);
+                                //设置正面按钮
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Toast.makeText(DeviceDetailActivity.this, "开锁ACK", Toast.LENGTH_SHORT).show();
+                                        ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
+                                        dialog.dismiss();
+                                        new Handler().postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                stopAdvertise();
+                                            }
+                                        }, 3000);
+                                        //isShowDialog1=true;
+                                    }
+                                });
+                                if (dialog == null) {
+                                    dialog = builder.create();
+                                }
+                                if (!dialog.isShowing()) {
+                                    if (isShowDialog1) {
+                                        dialog.show();
+                                        isShowDialog1 = false;
+                                    }
+
+                                }
+                            }
+                        });
+
+                    }else{
+                        isUnlock=false;
+                        //Toast.makeText(DeviceDetailActivity.this, "密码错误请重新输入！", Toast.LENGTH_SHORT).show();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
+                                builder.setTitle("收到开锁命令");
+                                builder.setMessage("开锁失败");
+                                // builder.setIcon(R.mipmap.ic_launcher_round);
+                                //点击对话框以外的区域是否让对话框消失
+                                builder.setCancelable(false);
+                                //设置正面按钮
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Toast.makeText(DeviceDetailActivity.this, "开锁ACK", Toast.LENGTH_SHORT).show();
+                                        ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
+                                        dialog.dismiss();
+                                        new Handler().postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                stopAdvertise();
+                                            }
+                                        }, 3000);
+                                        //isShowDialog1=true;
+                                    }
+                                });
+                                if (dialog == null) {
+                                    dialog = builder.create();
+                                }
+                                if (!dialog.isShowing()) {
+                                    if (isShowDialog1) {
+                                        dialog.show();
+                                        isShowDialog1 = false;
+                                    }
+
+                                }
+                            }
+                        });
+                    }
+                }
+
+            }
+
+
+            if(ByteUtils.byteToString(mBytes).endsWith("1234")){
 
                 Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
                 runOnUiThread(new Runnable() {
@@ -247,8 +342,44 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     }
                 });
 
+            }
+
+            if(ByteUtils.byteToString(mBytes).endsWith("2345")){
+
+                Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopAdvertise();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
+                        builder.setMessage("开锁失败");
+                        // builder.setIcon(R.mipmap.ic_launcher_round);
+                        //点击对话框以外的区域是否让对话框消失
+                        builder.setCancelable(false);
+                        //设置正面按钮
+                        builder.setPositiveButton("好的", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                dialog.dismiss();
+                                //isShowDialog2=true;
+                            }
+                        });
+                        if(dialog==null) {
+                            dialog = builder.create();
+                        }
+                        if(!dialog.isShowing()) {
+                            if(isShowDialog2){
+                                dialog.show();
+                                isShowDialog2=false;
+                            }
+                        }
+                    }
+                });
+
 
             }
+
 
         }
 
@@ -265,6 +396,8 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
         }
     };
+
+
 
     /**
      * 添加服务，特征
@@ -471,13 +604,41 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
        // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0xAC, broadcastData);
+        mDataBuilder.addManufacturerData(0xAB, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
 
     //设置一下FMP广播数据
-    public static AdvertiseData createAdvertiseData2() {
+    public static AdvertiseData unlocakData(String pwd,String mac) {
+        /*AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
+        //添加的数据
+        mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
+
+        AdvertiseData mAdvertiseData = mDataBuilder.build();
+
+        if (mAdvertiseData == null) {
+            Log.e(TAG, "mAdvertiseSettings == null");
+        }
+        return mAdvertiseData;*/
+        StringBuilder sb=new StringBuilder();
+        sb.append(pwd).append(mac);
+        //  byte[] broadcastData ={0x34,0x56}
+        byte[] broadcastData=sb.toString().getBytes();
+        Log.e(TAG, "broadcastData="+sb.toString()+" broadcastData=="+broadcastData.toString());
+        AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
+        // mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
+        //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
+        // mDataBuilder.setIncludeTxPowerLevel(true);
+        //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
+        mDataBuilder.addManufacturerData(0xAC, broadcastData);
+        AdvertiseData mAdvertiseData = mDataBuilder.build();
+        return mAdvertiseData;
+    }
+
+
+    //设置一下FMP广播数据
+    public static AdvertiseData setPwdData_ack() {
         /*AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
         //添加的数据
         mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
@@ -494,7 +655,37 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
         // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0x01AC, broadcastData);
+        mDataBuilder.addManufacturerData(0xAD, broadcastData);
+        AdvertiseData mAdvertiseData = mDataBuilder.build();
+        return mAdvertiseData;
+    }
+
+    //设置一下FMP广播数据
+    public static AdvertiseData unLockData_ack(boolean isUnlock) {
+        /*AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
+        //添加的数据
+        mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
+
+        AdvertiseData mAdvertiseData = mDataBuilder.build();
+
+        if (mAdvertiseData == null) {
+            Log.e(TAG, "mAdvertiseSettings == null");
+        }
+        return mAdvertiseData;*/
+        byte[] broadcastData;
+        if(isUnlock) {
+            //密码正确
+            broadcastData= new byte[]{0x12, 0x34};
+        }else{
+         //密码错误
+           broadcastData = new byte[]{0x23, 0x45};
+        }
+        AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
+        // mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
+        //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
+        // mDataBuilder.setIncludeTxPowerLevel(true);
+        //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
+        mDataBuilder.addManufacturerData(0xAD, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
@@ -521,16 +712,21 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onClick(View v) {
         switch (v.getId()){
+
             case R.id.bluedetail_unlock:
                 //开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
-               // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
-
-
-              //  mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
-                searchDevice2();
-
-                // ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
-               // searchDevice2();
+                String unloca_pwds=put_pwd.getText().toString().trim();
+                if(unloca_pwds==""||unloca_pwds==null||unloca_pwds.equals("")){
+                    Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
+                    return;
+                }
+                mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), unlocakData(unloca_pwds,mac), mAdvertiseCallback);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopAdvertise();
+                    }
+                },3000);
                 Log.e(TAG, "开启广播");
               break;
             case R.id.bluedetail_getnotify:
@@ -549,7 +745,12 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     return;
                 }
                 mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
-
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopAdvertise();
+                    }
+                },3000);
 
                 break;
             case R.id.bluedetail_closeadvertise:
