@@ -17,7 +17,12 @@
         android:textSize="20sp"
         android:gravity="center"
         />
-
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginBottom="10dp"
+    >
         <Button
             android:id="@+id/bluedetail_unlock"
             android:layout_width="wrap_content"
@@ -25,23 +30,38 @@
             android:padding="10dp"
             android:text="开锁"
             />
-    <LinearLayout
+    <EditText
+        android:id="@+id/put_pwd"
         android:layout_width="match_parent"
         android:layout_height="40dp"
+        android:layout_marginLeft="6dp"
+        android:hint="请输入开锁密码"
+        android:maxEms="4"
+        android:padding="10dp"
+        />
+</LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:layout_marginBottom="10dp"
         >
         <Button
             android:id="@+id/bluedetail_lock"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:text="设置密码"
             android:padding="10dp"
             />
         <EditText
+            android:id="@+id/set_pwd"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_marginLeft="6dp"
-            android:hint="请输入密码"
+            android:hint="请设置4位数字密码"
+            android:padding="10dp"
+            android:inputType="number"
+            android:maxLength="4"
             />
 
     </LinearLayout>
@@ -59,6 +79,7 @@
         android:layout_height="wrap_content"
         android:padding="10dp"
         android:text="发送数据"
+        android:visibility="gone"
         />
     <Button
         android:id="@+id/bluedetail_closeadvertise"

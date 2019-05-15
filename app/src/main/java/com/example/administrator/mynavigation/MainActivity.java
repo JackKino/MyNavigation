@@ -253,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.e(TAG, "开启广播");*/
                 Intent intent = new Intent();
                 intent.setClass(this, DeviceDetailActivity.class);
-                intent.putExtra("mac", "测试");
+                intent.putExtra("mac", MAC);
                 startActivity(intent);
                 break;
         }

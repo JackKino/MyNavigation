@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,11 +44,11 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     public final static UUID UUID_LOST_SERVICE = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
     public final static UUID UUID_LOST_WRITE = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
     public final static UUID UUID_LOST_ENABLE = UUID.fromString("0000fff2-0000-1000-8000-00805f9b34fb");
-    private static final String MAC = "B4:0B:44:3E:23:35";
+    //private static final String MAC = "B4:0B:44:3E:23:35";
 
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     private BluetoothAdapter mBluetoothAdapter;
-    private Button bluedetail_unlock,bluedetail_getnotify,bluedetail_setData;
+    private Button bluedetail_unlock,bluedetail_getnotify,bluedetail_setData,bluedetail_lock;
     private TextView bluedetail_mac;
 
     private BluetoothGattServer gattServer;
@@ -59,6 +60,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     private boolean isShowDialog1=true;
     private boolean isShowDialog2=true;
     private Button bluedetail_closeadvertise;
+    private EditText set_pwd,put_pwd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +76,12 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         bluedetail_setData.setOnClickListener(this);
         bluedetail_closeadvertise=findViewById(R.id.bluedetail_closeadvertise);
         bluedetail_closeadvertise.setOnClickListener(this);
+        bluedetail_lock=findViewById(R.id.bluedetail_lock);
+        bluedetail_lock.setOnClickListener(this);
+
+
+        set_pwd=this.findViewById(R.id.set_pwd);
+        put_pwd=this.findViewById(R.id.put_pwd);
 
 
         mac=getIntent().getExtras().getString("mac");
@@ -442,7 +450,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     }
 
     //设置一下FMP广播数据
-    public static AdvertiseData createAdvertiseData() {
+    public static AdvertiseData setPwdData(String pwd,String mac) {
         /*AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
         //添加的数据
         mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
@@ -453,13 +461,17 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "mAdvertiseSettings == null");
         }
         return mAdvertiseData;*/
-        byte[] broadcastData ={0x34,0x56};
+        StringBuilder sb=new StringBuilder();
+        sb.append(pwd).append(mac);
+      //  byte[] broadcastData ={0x34,0x56}
+        byte[] broadcastData=sb.toString().getBytes();
+        Log.e(TAG, "broadcastData="+sb.toString()+" broadcastData=="+broadcastData.toString());
         AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
        // mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
        // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0x01AC, broadcastData);
+        mDataBuilder.addManufacturerData(0xAC, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
@@ -512,7 +524,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             case R.id.bluedetail_unlock:
                 //开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
                // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
-                mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
+
+
+              //  mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), createAdvertiseData(), mAdvertiseCallback);
                 searchDevice2();
 
                 // ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
@@ -520,20 +534,23 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 Log.e(TAG, "开启广播");
               break;
             case R.id.bluedetail_getnotify:
-               // characterNotify.setValue("HIHHHHH");
-               // gattServer.notifyCharacteristicChanged(bluetoothDevice, characterNotify, false);
-            /*  ClientManager.getClient().read(MAC, UUID_LOST_SERVICE, UUID_LOST_WRITE, new BleReadResponse() {
-                  @Override
-                  public void onResponse(int i, byte[] bytes) {
-                      Log.e("MainActivity","i=="+i);
-                  }
-              });*/
+
                 searchDevice();
 
                 break;
             case R.id.bluedetail_setData:
-                ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
-                searchDevice2();
+               /* ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
+                searchDevice2();*/
+                break;
+            case R.id.bluedetail_lock:
+                String pwds=set_pwd.getText().toString().trim();
+                if(pwds==""||pwds==null||pwds.equals("")){
+                    Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
+                    return;
+                }
+                mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
+
+
                 break;
             case R.id.bluedetail_closeadvertise:
                 stopAdvertise();
