@@ -221,7 +221,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     Toast.makeText(DeviceDetailActivity.this, "你还没有设置密码，请先设置密码！", Toast.LENGTH_SHORT).show();
 
                 } else {
-                    if(mac.equals(ByteUtils.byteToString(mBytes))) {
+                    String value=ByteUtils.byteToString(mBytes);
+                    value.replace("AC","AB");
+                    if(mac.equals(value)) {
                         isUnlock=true;
                         SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
                         Log.e("onDeviceFounded", "onDeviceFounded" + device.getName() + " address==" + device.getAddress() + "   " + ByteUtils.byteToString(mBytes));
@@ -720,6 +722,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
                     return;
                 }
+                if(mBluetoothLeAdvertiser==null)
+                    mBluetoothLeAdvertiser= BluetoothUtils.getBluetoothLeAdvertiser();//判断你的设备到底支持不支持BLE Peripheral。假如此返回值非空，你才可以继续有机会开发
+
                 mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), unlocakData(unloca_pwds,mac), mAdvertiseCallback);
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -739,6 +744,9 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 searchDevice2();*/
                 break;
             case R.id.bluedetail_lock:
+                if(mBluetoothLeAdvertiser==null)
+                    mBluetoothLeAdvertiser= BluetoothUtils.getBluetoothLeAdvertiser();//判断你的设备到底支持不支持BLE Peripheral。假如此返回值非空，你才可以继续有机会开发
+
                 String pwds=set_pwd.getText().toString().trim();
                 if(pwds==""||pwds==null||pwds.equals("")){
                     Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
