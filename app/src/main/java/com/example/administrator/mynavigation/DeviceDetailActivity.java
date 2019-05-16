@@ -101,7 +101,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "支持BLE Peripheral");
         }
 
-        save_pwd= (String) SharedPreferencesUtils.getParam(this,"String","pwd");
+        save_pwd= (String) SharedPreferencesUtils.getString(this,"pwd","pwd");
         searchDevice();
 
     }
@@ -136,7 +136,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 byte[] mBytes = ByteUtils.trimLast(device.scanRecord);
 
             if(ByteUtils.byteToString(mBytes).contains("ABAB")){
-                SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
+                SharedPreferencesUtils.putString(DeviceDetailActivity.this, "pwd", ByteUtils.byteToString(mBytes));
                 Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
                     runOnUiThread(new Runnable() {
                         @Override
@@ -153,6 +153,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                     Toast.makeText(DeviceDetailActivity.this, "设置密码ACK", Toast.LENGTH_SHORT).show();
                                     ClientManager.getClient().unlock(setPwdData_ack(),mAdvertiseCallback);
                                     dialog.dismiss();
+                                    dialog=null;
                                     new Handler().postDelayed(new Runnable() {
                                         @Override
                                         public void run() {
@@ -196,6 +197,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                             public void onClick(DialogInterface dialog, int which) {
 
                                 dialog.dismiss();
+                                dialog=null;
                                 //isShowDialog2=true;
                             }
                         });
@@ -217,15 +219,15 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
             if(ByteUtils.byteToString(mBytes).contains("ACAC")) {
                 isUnlock=false;
-                if (mac.equals("") || mac == null) {
+                if (save_pwd.equals("") || save_pwd == null) {
                     Toast.makeText(DeviceDetailActivity.this, "你还没有设置密码，请先设置密码！", Toast.LENGTH_SHORT).show();
 
                 } else {
                     String value=ByteUtils.byteToString(mBytes);
-                    value.replace("ACAC","ABAB");
-                    if(mac.equals(value)) {
+                    value=value.replace("ACAC","ABAB");
+                    if(save_pwd.equals(value)) {
                         isUnlock=true;
-                        SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
+                        SharedPreferencesUtils.putString(DeviceDetailActivity.this, "pwd", ByteUtils.byteToString(mBytes));
                         Log.e("onDeviceFounded", "onDeviceFounded" + device.getName() + " address==" + device.getAddress() + "   " + ByteUtils.byteToString(mBytes));
                         runOnUiThread(new Runnable() {
                             @Override
@@ -243,6 +245,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                         Toast.makeText(DeviceDetailActivity.this, "开锁ACK", Toast.LENGTH_SHORT).show();
                                         ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
                                         dialog.dismiss();
+                                        dialog=null;
                                         new Handler().postDelayed(new Runnable() {
                                             @Override
                                             public void run() {
@@ -284,6 +287,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                         Toast.makeText(DeviceDetailActivity.this, "开锁ACK", Toast.LENGTH_SHORT).show();
                                         ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
                                         dialog.dismiss();
+                                        dialog=null;
                                         new Handler().postDelayed(new Runnable() {
                                             @Override
                                             public void run() {
@@ -329,6 +333,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                             public void onClick(DialogInterface dialog, int which) {
 
                                 dialog.dismiss();
+                                dialog=null;
                                 //isShowDialog2=true;
                             }
                         });
@@ -364,6 +369,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                             public void onClick(DialogInterface dialog, int which) {
 
                                 dialog.dismiss();
+                                dialog=null;
                                 //isShowDialog2=true;
                             }
                         });
