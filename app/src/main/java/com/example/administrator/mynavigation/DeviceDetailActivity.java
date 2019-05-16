@@ -135,7 +135,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                // BluetoothLog.v(String.format("beacon for %s\n%s", device.getAddress(), beacon.toString()));
                 byte[] mBytes = ByteUtils.trimLast(device.scanRecord);
 
-            if(ByteUtils.byteToString(mBytes).contains("AB")){
+            if(ByteUtils.byteToString(mBytes).contains("ABAB")){
                 SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
                 Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
                     runOnUiThread(new Runnable() {
@@ -215,14 +215,14 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             }
 
 
-            if(ByteUtils.byteToString(mBytes).contains("AC")) {
+            if(ByteUtils.byteToString(mBytes).contains("ACAC")) {
                 isUnlock=false;
                 if (mac.equals("") || mac == null) {
                     Toast.makeText(DeviceDetailActivity.this, "你还没有设置密码，请先设置密码！", Toast.LENGTH_SHORT).show();
 
                 } else {
                     String value=ByteUtils.byteToString(mBytes);
-                    value.replace("AC","AB");
+                    value.replace("ACAC","ABAB");
                     if(mac.equals(value)) {
                         isUnlock=true;
                         SharedPreferencesUtils.setParam(DeviceDetailActivity.this, "String", ByteUtils.byteToString(mBytes));
@@ -606,7 +606,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
        // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0xAB, broadcastData);
+        mDataBuilder.addManufacturerData(0xABAB, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
@@ -633,7 +633,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
         // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0xAC, broadcastData);
+        mDataBuilder.addManufacturerData(0xACAC, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
