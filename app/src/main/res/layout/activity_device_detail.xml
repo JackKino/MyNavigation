@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="开锁"
+            android:text="UNLOCK"
             />
     <EditText
         android:id="@+id/put_pwd"
@@ -36,8 +36,8 @@
         android:layout_height="40dp"
         android:layout_marginLeft="6dp"
         android:hint="请输入开锁密码"
-        android:maxEms="4"
         android:padding="10dp"
+        android:visibility="gone"
         />
 </LinearLayout>
     <LinearLayout
@@ -47,10 +47,10 @@
         android:layout_marginBottom="10dp"
         >
         <Button
-            android:id="@+id/bluedetail_lock"
+            android:id="@+id/bluedetail_bind"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="设置密码"
+            android:text="BIND"
             android:padding="10dp"
             />
         <EditText
@@ -61,7 +61,8 @@
             android:hint="请设置4位数字密码"
             android:padding="10dp"
             android:inputType="number"
-            android:maxLength="4"
+            android:visibility="gone"
+
             />
 
     </LinearLayout>
@@ -87,6 +88,7 @@
         android:layout_height="wrap_content"
         android:padding="10dp"
         android:text="关闭广播"
+        android:visibility="gone"
         />
 
 

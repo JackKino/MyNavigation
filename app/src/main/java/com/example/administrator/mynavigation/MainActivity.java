@@ -204,6 +204,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mTvTitle.setText(R.string.devices);
             mDevices.clear();
         }
+
+        @Override
+        public void onResponseAck(int i, int i1) {
+
+        }
     };
 
     @Override

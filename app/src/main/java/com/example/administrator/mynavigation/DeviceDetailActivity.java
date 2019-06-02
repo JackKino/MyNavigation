@@ -2,12 +2,8 @@ package com.example.administrator.mynavigation;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattServer;
-import android.bluetooth.BluetoothGattServerCallback;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
@@ -34,6 +30,8 @@ import com.inuker.bluetooth.library.utils.BluetoothLog;
 import com.inuker.bluetooth.library.utils.BluetoothUtils;
 import com.inuker.bluetooth.library.utils.ByteUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class DeviceDetailActivity extends AppCompatActivity implements View.OnClickListener {
@@ -48,7 +46,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     private BluetoothAdapter mBluetoothAdapter;
-    private Button bluedetail_unlock,bluedetail_getnotify,bluedetail_setData,bluedetail_lock;
+    private Button bluedetail_unlock,bluedetail_getnotify,bluedetail_setData,bluedetail_bind;
     private TextView bluedetail_mac;
 
     private BluetoothGattServer gattServer;
@@ -79,8 +77,8 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         bluedetail_setData.setOnClickListener(this);
         bluedetail_closeadvertise=findViewById(R.id.bluedetail_closeadvertise);
         bluedetail_closeadvertise.setOnClickListener(this);
-        bluedetail_lock=findViewById(R.id.bluedetail_lock);
-        bluedetail_lock.setOnClickListener(this);
+        bluedetail_bind=findViewById(R.id.bluedetail_bind);
+        bluedetail_bind.setOnClickListener(this);
 
 
         set_pwd=this.findViewById(R.id.set_pwd);
@@ -103,6 +101,12 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
         save_pwd= (String) SharedPreferencesUtils.getString(this,"pwd","pwd");
         searchDevice();
+
+
+
+
+
+
 
     }
 
@@ -134,24 +138,32 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 Beacon beacon = new Beacon(device.scanRecord);
                // BluetoothLog.v(String.format("beacon for %s\n%s", device.getAddress(), beacon.toString()));
                 byte[] mBytes = ByteUtils.trimLast(device.scanRecord);
+            Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+" scanRecord==  "+ByteUtils.byteToString(mBytes));
 
-            if(ByteUtils.byteToString(mBytes).contains("ABAB")){
+            if(ByteUtils.byteToString(mBytes).contains("0201011BFF")){
                 SharedPreferencesUtils.putString(DeviceDetailActivity.this, "pwd", ByteUtils.byteToString(mBytes));
                 Log.e("onDeviceFounded","onDeviceFounded"+device.getName()+" address=="+device.getAddress()+"   "+ByteUtils.byteToString(mBytes));
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             AlertDialog.Builder builder = new AlertDialog.Builder(DeviceDetailActivity.this);
-                            builder.setMessage("收到设置密码命令");
+                            builder.setMessage("收到设置bind命令");
                             // builder.setIcon(R.mipmap.ic_launcher_round);
                             //点击对话框以外的区域是否让对话框消失
                             builder.setCancelable(false);
                             //设置正面按钮
-                            builder.setPositiveButton("设置", new DialogInterface.OnClickListener() {
+                            builder.setPositiveButton("ACK", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    Toast.makeText(DeviceDetailActivity.this, "设置密码ACK", Toast.LENGTH_SHORT).show();
-                                    ClientManager.getClient().unlock(setPwdData_ack(),mAdvertiseCallback);
+                                    Toast.makeText(DeviceDetailActivity.this, "设置BIND ACK", Toast.LENGTH_SHORT).show();
+                                  //  ClientManager.getClient().unlock(setPwdData_ack(),mAdvertiseCallback);
+                                    if(mBluetoothLeAdvertiser==null)
+                                        mBluetoothLeAdvertiser= BluetoothUtils.getBluetoothLeAdvertiser();//判断你的设备到底支持不支持BLE Peripheral。假如此返回值非空，你才可以继续有机会开发
+
+                                    mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10),setPwdData_ack(), mAdvertiseCallback);
+
+
+
                                     dialog.dismiss();
                                     dialog=null;
                                     new Handler().postDelayed(new Runnable() {
@@ -159,7 +171,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                         public void run() {
                                             stopAdvertise();
                                         }
-                                    },3000);
+                                    },5000);
                                     //isShowDialog1=true;
                                 }
                             });
@@ -243,7 +255,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         Toast.makeText(DeviceDetailActivity.this, "开锁ACK", Toast.LENGTH_SHORT).show();
-                                        ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
+                                       // ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
                                         dialog.dismiss();
                                         dialog=null;
                                         new Handler().postDelayed(new Runnable() {
@@ -285,7 +297,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         Toast.makeText(DeviceDetailActivity.this, "开锁ACK", Toast.LENGTH_SHORT).show();
-                                        ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
+                                       // ClientManager.getClient().unlock(unLockData_ack(isUnlock), mAdvertiseCallback);
                                         dialog.dismiss();
                                         dialog=null;
                                         new Handler().postDelayed(new Runnable() {
@@ -403,127 +415,18 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
 
         }
+
+        @Override
+        public void onResponseAck(int ack, int status) {
+            Log.e(TAG,"ACK=="+ack+"  status=="+status);
+            Toast.makeText(DeviceDetailActivity.this,"Bind成功",Toast.LENGTH_LONG).show();
+
+        }
     };
 
 
 
-    /**
-     * 添加服务，特征
-     */
-    private void setServer() {
-        //读写特征
-         characterWrite = new BluetoothGattCharacteristic(
-                UUID_LOST_WRITE, BluetoothGattCharacteristic.PROPERTY_READ | BluetoothGattCharacteristic.PROPERTY_WRITE,
-                BluetoothGattCharacteristic.PERMISSION_READ | BluetoothGattCharacteristic.PERMISSION_WRITE);
-        //使能特征
-        characterNotify = new BluetoothGattCharacteristic(UUID_LOST_ENABLE,
-                BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ);
-        characterNotify.addDescriptor(new BluetoothGattDescriptor(CLIENT_CHARACTERISTIC_CONFIG, BluetoothGattDescriptor.PERMISSION_WRITE | BluetoothGattCharacteristic.PERMISSION_READ));
-        //服务
-        BluetoothGattService gattService = new BluetoothGattService(UUID_LOST_SERVICE,
-                BluetoothGattService.SERVICE_TYPE_PRIMARY);
-        //为服务添加特征
-        gattService.addCharacteristic(characterWrite);
-        gattService.addCharacteristic(characterNotify);
-        //管理服务，连接和数据交互回调
-        gattServer = mBluetoothManager.openGattServer(this,
-                new BluetoothGattServerCallback() {
 
-                    @Override
-                    public void onConnectionStateChange(final BluetoothDevice device,
-                                                        final int status, final int newState) {
-                        super.onConnectionStateChange(device, status, newState);
-                        bluetoothDevice = device;
-                        Log.d("MainActivity", "onConnectionStateChange:" + device + "    " + status + "   " + newState);
-                        Log.e("MainActivity",device.getAddress() + "   " + device.getName() + "   " + status + "  " + newState);
-
-                       /* runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                               Log.e("MainActivity",device.getAddress() + "   " + device.getName() + "   " + status + "  " + newState);
-                            }
-                        });*/
-                    }
-
-                    @Override
-                    public void onServiceAdded(int status,
-                                               BluetoothGattService service) {
-                        super.onServiceAdded(status, service);
-                        Log.d("MainActivity", "service added");
-                    }
-
-                    @Override
-                    public void onCharacteristicReadRequest(
-                            BluetoothDevice device, int requestId, int offset,
-                            BluetoothGattCharacteristic characteristic) {
-                        super.onCharacteristicReadRequest(device, requestId,
-                                offset, characteristic);
-                        gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characteristic.getValue());
-                        Log.d("MainActivity", "onCharacteristicReadRequest");
-                    }
-
-                    @Override
-                    public void onCharacteristicWriteRequest(
-                            BluetoothDevice device, int requestId,
-                            BluetoothGattCharacteristic characteristic,
-                            boolean preparedWrite, boolean responseNeeded,
-                            int offset, final byte[] value) {
-                        super.onCharacteristicWriteRequest(device, requestId,
-                                characteristic, preparedWrite, responseNeeded,
-                                offset, value);
-                        gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null);
-                        Log.d("MainActivity", "onCharacteristicWriteRequest" + value[0]);
-                       /* runOnUiThread(new Runnable() {
-                            @SuppressLint("SetTextI18n")
-                            @Override
-                            public void run() {
-
-                            }
-                        });*/
-                    }
-
-                    @Override
-                    public void onNotificationSent(BluetoothDevice device, int status) {
-                        super.onNotificationSent(device, status);
-                        Log.i("MainActivity", "onNotificationSent: ");
-                    }
-
-                    @Override
-                    public void onMtuChanged(BluetoothDevice device, int mtu) {
-                        super.onMtuChanged(device, mtu);
-                    }
-
-                    @Override
-                    public void onDescriptorReadRequest(BluetoothDevice device,
-                                                        int requestId, int offset,
-                                                        BluetoothGattDescriptor descriptor) {
-                        super.onDescriptorReadRequest(device, requestId,
-                                offset, descriptor);
-                        gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, characterNotify.getValue());
-                        Log.d("MainActivity", "onDescriptorReadRequest");
-                    }
-
-                    @Override
-                    public void onDescriptorWriteRequest(BluetoothDevice device, int requestId,
-                                                         BluetoothGattDescriptor descriptor, boolean preparedWrite, boolean responseNeeded,
-                                                         int offset, byte[] value) {
-                        super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded,
-                                offset, value);
-                        gattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, value);
-//                        characterNotify.setValue("HIHHHHH");
-//                        gattServer.notifyCharacteristicChanged(bluetoothDevice, characterNotify, false);
-                        Log.d("MainActivity", "onDescriptorWriteRequest");
-                    }
-
-                    @Override
-                    public void onExecuteWrite(BluetoothDevice device,
-                                               int requestId, boolean execute) {
-                        super.onExecuteWrite(device, requestId, execute);
-                        Log.e("MainActivity", "onExecuteWrite");
-                    }
-                });
-        gattServer.addService(gattService);
-    }
 
 
 
@@ -612,7 +515,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
        // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0xABAB, broadcastData);
+        mDataBuilder.addManufacturerData(0x6DAC, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
@@ -657,14 +560,33 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             Log.e(TAG, "mAdvertiseSettings == null");
         }
         return mAdvertiseData;*/
-        byte[] broadcastData ={0x45,0x67};
+        byte[] broadcastData ={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x05};
         AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
         // mDataBuilder.addServiceData(ParcelUuid.fromString(HEART_RATE_SERVICE), "eeeeeeeeee".getBytes());
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
         // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0xAD, broadcastData);
+        mDataBuilder.addManufacturerData(0x0005, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
+
+        byte[] broadcastData2 ={0x05,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x05};
+        List<Integer> acks=new ArrayList<>();
+        for(int i=0;i<9;i++){
+            acks.add((int) broadcastData2[i]);
+        }
+        int status=StringUtils.andor(acks);
+        Log.e("status","status=="+status+"   "+broadcastData2[9]);
+        if(broadcastData2[9]== StringUtils.andor(acks)){
+
+        }
+
+
+
+
+
+
+
+
         return mAdvertiseData;
     }
 
@@ -693,7 +615,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         //mDataBuilder.setIncludeDeviceName(true); //广播名称也需要字节长度
         // mDataBuilder.setIncludeTxPowerLevel(true);
         //mDataBuilder.addServiceData(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"),new byte[]{1,2});
-        mDataBuilder.addManufacturerData(0xAD, broadcastData);
+        mDataBuilder.addManufacturerData(0x6E, broadcastData);
         AdvertiseData mAdvertiseData = mDataBuilder.build();
         return mAdvertiseData;
     }
@@ -722,7 +644,26 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         switch (v.getId()){
 
             case R.id.bluedetail_unlock:
-                //开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
+
+                if(mBluetoothLeAdvertiser==null)
+                    mBluetoothLeAdvertiser= BluetoothUtils.getBluetoothLeAdvertiser();//判断你的设备到底支持不支持BLE Peripheral。假如此返回值非空，你才可以继续有机会开发
+
+               /* String pwds=set_pwd.getText().toString().trim();
+                if(pwds==""||pwds==null||pwds.equals("")){
+                    Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
+                    return;
+                }*/
+                // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
+                ClientManager.getClient().unlock(mac,"",mAdvertiseCallback);
+
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopAdvertise();
+                    }
+                },5000);
+
+                /*//开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
                 String unloca_pwds=put_pwd.getText().toString().trim();
                 if(unloca_pwds==""||unloca_pwds==null||unloca_pwds.equals("")){
                     Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
@@ -738,7 +679,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                         stopAdvertise();
                     }
                 },3000);
-                Log.e(TAG, "开启广播");
+                Log.e(TAG, "开启广播");*/
               break;
             case R.id.bluedetail_getnotify:
 
@@ -749,22 +690,24 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                /* ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
                 searchDevice2();*/
                 break;
-            case R.id.bluedetail_lock:
+            case R.id.bluedetail_bind:
                 if(mBluetoothLeAdvertiser==null)
                     mBluetoothLeAdvertiser= BluetoothUtils.getBluetoothLeAdvertiser();//判断你的设备到底支持不支持BLE Peripheral。假如此返回值非空，你才可以继续有机会开发
 
-                String pwds=set_pwd.getText().toString().trim();
+               /* String pwds=set_pwd.getText().toString().trim();
                 if(pwds==""||pwds==null||pwds.equals("")){
                     Toast.makeText(this,"请输入密码",Toast.LENGTH_LONG).show();
                     return;
-                }
-                mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
-                handler.postDelayed(new Runnable() {
+                }*/
+               // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
+             //  ClientManager.getClient().bind(mac,"",mAdvertiseCallback);
+
+               /* handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         stopAdvertise();
                     }
-                },3000);
+                },5000);*/
 
                 break;
             case R.id.bluedetail_closeadvertise:
