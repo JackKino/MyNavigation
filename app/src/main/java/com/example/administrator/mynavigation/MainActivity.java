@@ -26,6 +26,8 @@ import com.inuker.bluetooth.library.search.SearchResult;
 import com.inuker.bluetooth.library.search.response.SearchResponse;
 import com.inuker.bluetooth.library.utils.BluetoothLog;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -206,9 +208,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        public void onResponseAck(int i, int i1) {
+        public void onResponseAck(JSONObject jsonObject) {
 
         }
+
+
     };
 
     @Override

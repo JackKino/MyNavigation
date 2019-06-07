@@ -46,7 +46,8 @@ dependencies {
     /*compile 'com.jakewharton:butterknife:8.8.1'
                 annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'*/
     // implementation (name:'library-release',ext:'aar')
-    implementation files('libs/myjar.jar')
+    //implementation files('libs/myjar.jar')
     implementation project(path: ':library')
     implementation 'net.vidageek:mirror:1.6.1'
+    implementation project(path: ':bluelibrary')
 }

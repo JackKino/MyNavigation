@@ -17,7 +17,8 @@
         android:textSize="20sp"
         android:gravity="center"
         />
-<LinearLayout
+
+        <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -52,6 +53,7 @@
             android:layout_height="wrap_content"
             android:text="BIND"
             android:padding="10dp"
+            android:visibility="gone"
             />
         <EditText
             android:id="@+id/set_pwd"
@@ -90,6 +92,17 @@
         android:text="关闭广播"
         android:visibility="gone"
         />
+
+    <com.example.administrator.mynavigation.view.PullRefreshListView
+
+        android:id="@+id/acks_listview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="10dp"
+
+        />
+
+
 
 
 </LinearLayout>
