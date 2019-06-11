@@ -48,7 +48,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
     private BluetoothLeAdvertiser mBluetoothLeAdvertiser;
     private BluetoothAdapter mBluetoothAdapter;
-    private Button bluedetail_unlock, bluedetail_getnotify, bluedetail_setData, bluedetail_bind;
+    private Button bluedetail_unlock, bluedetail_getnotify, bluedetail_unbind, bluedetail_bind;
     private TextView bluedetail_mac;
 
     private BluetoothGattServer gattServer;
@@ -67,6 +67,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
     private List<String> ackStrs=new ArrayList<>();
     private PullRefreshListView acks_listview;
     private AcksListAdapter mAdapter;
+    private TextView bluedetail_ackresponse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,14 +79,15 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
         bluedetail_getnotify = findViewById(R.id.bluedetail_getnotify);
         bluedetail_getnotify.setOnClickListener(this);
-        bluedetail_setData = findViewById(R.id.bluedetail_setData);
-        bluedetail_setData.setOnClickListener(this);
-        bluedetail_closeadvertise = findViewById(R.id.bluedetail_closeadvertise);
-        bluedetail_closeadvertise.setOnClickListener(this);
+
+        bluedetail_unbind = findViewById(R.id.bluedetail_unbind);
+        bluedetail_unbind.setOnClickListener(this);
+
         bluedetail_bind = findViewById(R.id.bluedetail_bind);
         bluedetail_bind.setOnClickListener(this);
 
         acks_listview = findViewById(R.id.acks_listview);
+        bluedetail_ackresponse=findViewById(R.id.bluedetail_ackresponse);
 
 
         set_pwd = this.findViewById(R.id.set_pwd);
@@ -177,7 +179,8 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
         @Override
         public void onResponseAck(JSONObject jsonObject) {
-
+          Log.e("onResponseAck","jsonObject=="+jsonObject.toString());
+            bluedetail_ackresponse.setText("Ack=="+jsonObject.toString());
         }
 
     };
@@ -408,7 +411,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                         public void run() {
                             stopAdvertise();
                         }
-                    }, 5000);
+                    }, 3000);
 
                 /*//开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
                 String unloca_pwds=put_pwd.getText().toString().trim();
@@ -433,9 +436,15 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     searchDevice();
 
                     break;
-                case R.id.bluedetail_setData:
-               /* ClientManager.getClient().unlock(createAdvertiseData(),mAdvertiseCallback);
-                searchDevice2();*/
+                case R.id.bluedetail_unbind:
+                    ClientManager.getClient().unbind(mac,"",mAdvertiseCallback);
+
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            stopAdvertise();
+                        }
+                    },3000);
                     break;
                 case R.id.bluedetail_bind:
                     if (mBluetoothLeAdvertiser == null)
@@ -447,14 +456,14 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     return;
                 }*/
                     // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
-                    //  ClientManager.getClient().bind(mac,"",mAdvertiseCallback);
+                      ClientManager.getClient().bind(mac,"",mAdvertiseCallback);
 
-               /* handler.postDelayed(new Runnable() {
+                handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         stopAdvertise();
                     }
-                },5000);*/
+                },3000);
 
                     break;
                 case R.id.bluedetail_closeadvertise:

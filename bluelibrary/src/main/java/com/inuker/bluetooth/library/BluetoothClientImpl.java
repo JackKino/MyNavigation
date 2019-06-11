@@ -15,6 +15,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import com.inuker.bluetooth.library.channel.CRC32;
 import com.inuker.bluetooth.library.connect.listener.BleConnectStatusListener;
@@ -496,21 +497,27 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
                         if (!ByteUtils.isEmpty(device.scanRecord)) {
                             List<Integer> ackchecks=new ArrayList<>();
                             byte [] acks=ByteUtils.trimLast(device.scanRecord);
-                            for(int i=0;i<9;i++){
+                            for(int i=1;i<10;i++){
                                 ackchecks.add((int) acks[i+2]);
                             }
 
-                            if(acks[11]==StringUtils.andor(ackchecks)){
+                            if(acks[2]==StringUtils.andor(ackchecks)){
                                 JSONObject jsonObject=new JSONObject();
-                                if(acks[2]==8) {
+                               // if(acks[11]==9) {//unlock的ack回调
                                     try {
-                                        jsonObject.put("ackCMD", "08");
+                                        jsonObject.put("ackCMD", acks[11]);
                                         jsonObject.put("mac",device.getAddress());
-                                        jsonObject.put("status",acks[3]);
+                                        jsonObject.put("status",acks[9]);
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
-                                }
+
+                                    if(acks[11]==5){
+                                        if(acks[9]!=0){
+                                            SharedPreferencesUtils.putString(mContext,"key","");
+                                        }
+                                    }
+                               // }
                                 response.onResponseAck(jsonObject);
                             }
                              String ack= ByteUtils.byteToString(ByteUtils.trimLast(device.scanRecord));
@@ -741,6 +748,12 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
         broadcastData[14]=0x09;
         broadcastData[15]=0x09;
 
+        broadcastData[5]=0x00;
+        for(int i=6;i<14;i++){
+            broadcastData[5] ^=broadcastData[i];
+        }
+
+
         String date=TimeHelper.getDateTime(TimeHelper.MY_SYSTEM_DATE_FORMAT);
         date=date.substring(2);
         String[] dates=date.split(":");
@@ -752,8 +765,8 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
         byte[] newlocalname= CRC32.get(localname).getBytes();
         newlocalname=ByteUtils.getBytes(newlocalname,2,7);
         System.arraycopy(newlocalname, 0, broadcastData, 16, 6);
-        broadcastData[22]=0x00;
-        broadcastData[23]=0x00;
+        broadcastData[22]=0x01;
+        broadcastData[23]=0x02;
 
         AdvertiseData.Builder mDataBuilder = new AdvertiseData.Builder();
         mDataBuilder.addManufacturerData(StringUtils.StringToHex(macs[0]+"00"), broadcastData);
@@ -762,9 +775,10 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
         AdvertiseSettings advertiseSettings=BluetoothUtils.createAdvSettings(true,30000);
         bluetoothLeAdvertiser.startAdvertising(advertiseSettings,mAdvertiseData,advertiseCallback);
 
-        //SharedPreferencesUtils.putString(mContext,"pwd",pwd);
-        //SharedPreferencesUtils.putString(mContext,"key",CRC32.get(localname));
-
+        SharedPreferencesUtils.putString(mContext,"pwd",pwd);
+        SharedPreferencesUtils.putString(mContext,"key",CRC32.get(localname));
+        Log.e("localname","CRC32.get(localname)=="+CRC32.get(localname));
+        Log.e("localname","broadcastData=="+StringUtils.toHexString(broadcastData,"-"));
     }
     @Override
     public void unbind(String mac,String pwd, AdvertiseCallback advertiseCallback) {
@@ -785,16 +799,47 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
         broadcastData[14]=0x09;
         broadcastData[15]=0x09;
 
-        String date=  SharedPreferencesUtils.getString(mContext,"key");
+        broadcastData[5]=0x00;
+        for(int i=6;i<14;i++){
+            broadcastData[5] ^=broadcastData[i];
+        }
+
+
+        /*String date=  SharedPreferencesUtils.getString(mContext,"key");
         String[] dates=date.split(":");
         byte[] localname=new byte[6];
         if(dates.length==6) {
             for (int i = 0; i < 6; i++) {
                 localname[i] = (byte) (0xff & StringUtils.StringToHex(dates[i]));
             }
+        }*/
+        /*String date=TimeHelper.getDateTime(TimeHelper.MY_SYSTEM_DATE_FORMAT);
+        date=date.substring(2);
+        String[] dates=date.split(":");
+        byte[] localname=new byte[6];
+        for(int i=0;i<6;i++){
+            localname[i]= (byte)(0xff & StringUtils.StringToHex(dates[i]));
+        }*/
+
+        String date=  SharedPreferencesUtils.getString(mContext,"key");
+        Log.e("localname","unbind  date=="+date);
+        byte[] localname = new byte[6];
+        byte[] newlocalname;
+        if(date!="") {
+            String[] dates = date.split(":");
+
+            if (dates.length == 6) {
+                for (int i = 0; i < 6; i++) {
+                    localname[i] = (byte) (0xff & StringUtils.StringToHex(dates[i]));
+                }
+            }
+            newlocalname = CRC32.get(localname).getBytes();
+        }else{
+            newlocalname=new byte[8];
         }
 
-        byte[] newlocalname= CRC32.get(localname).getBytes();
+
+        //byte[] newlocalname= CRC32.get(localname).getBytes();
         newlocalname=ByteUtils.getBytes(newlocalname,2,7);
         System.arraycopy(newlocalname, 0, broadcastData, 16, 6);
         broadcastData[22]=0x00;
@@ -807,6 +852,7 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
         AdvertiseSettings advertiseSettings=BluetoothUtils.createAdvSettings(true,30000);
         bluetoothLeAdvertiser.startAdvertising(advertiseSettings,mAdvertiseData,advertiseCallback);
 
+        Log.e("localname","unbind broadcastData=="+StringUtils.toHexString(broadcastData,"-"));
 
         //SharedPreferencesUtils.putString(mContext,"key",CRC32.get(localname));
 
@@ -830,10 +876,14 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
         broadcastData[13]= Constants.lcUnlockReq;
         broadcastData[14]=0x09;
         broadcastData[15]=0x09;
-
-        /*String date=  SharedPreferencesUtils.getString(mContext,"key");
+        broadcastData[5]=0x00;
+        for(int i=6;i<14;i++){
+            broadcastData[5] ^=broadcastData[i];
+        }
+        String date=  SharedPreferencesUtils.getString(mContext,"key");
+        Log.e("localname","unlock date=="+date);
         byte[] localname = new byte[6];
-        byte[] newlocalname=new byte[8];
+        byte[] newlocalname;
         if(date!="") {
             String[] dates = date.split(":");
 
@@ -845,16 +895,25 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
              newlocalname = CRC32.get(localname).getBytes();
         }else{
             newlocalname=new byte[8];
+        }
+
+        /*String date=  SharedPreferencesUtils.getString(mContext,"key");
+        String[] dates=date.split(":");
+        byte[] localname=new byte[6];
+        if(dates.length==6) {
+            for (int i = 0; i < 6; i++) {
+                localname[i] = (byte) (0xff & StringUtils.StringToHex(dates[i]));
+            }
         }*/
-        String date=TimeHelper.getDateTime(TimeHelper.MY_SYSTEM_DATE_FORMAT);
+       /* String date=TimeHelper.getDateTime(TimeHelper.MY_SYSTEM_DATE_FORMAT);
         date=date.substring(2);
         String[] dates=date.split(":");
         byte[] localname=new byte[6];
         for(int i=0;i<6;i++){
             localname[i]= (byte)(0xff & StringUtils.StringToHex(dates[i]));
-        }
+        }*/
 
-        byte[] newlocalname= CRC32.get(localname).getBytes();
+      //  byte[] newlocalname= CRC32.get(localname).getBytes();
 
             newlocalname = ByteUtils.getBytes(newlocalname, 2, 7);
             System.arraycopy(newlocalname, 0, broadcastData, 16, 6);
@@ -867,6 +926,7 @@ public class BluetoothClientImpl implements IBluetoothClient, ProxyInterceptor, 
             BluetoothLeAdvertiser bluetoothLeAdvertiser = BluetoothUtils.getBluetoothLeAdvertiser();
             AdvertiseSettings advertiseSettings = BluetoothUtils.createAdvSettings(true, 30000);
             bluetoothLeAdvertiser.startAdvertising(advertiseSettings, mAdvertiseData, advertiseCallback);
+        Log.e("localname","unclock broadcastData=="+StringUtils.toHexString(broadcastData,"-"));
 
 
         //SharedPreferencesUtils.putString(mContext,"key",CRC32.get(localname));
