@@ -30,6 +30,7 @@ import com.inuker.bluetooth.library.utils.BluetoothLog;
 import com.inuker.bluetooth.library.utils.BluetoothUtils;
 import com.inuker.bluetooth.library.utils.ByteUtils;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -132,6 +133,7 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                 .searchBluetoothLeDevice(60000, 1).build();
 
         ClientManager.getClient().search(request, mSearchResponse);
+
     }
 
 
@@ -180,7 +182,35 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
         @Override
         public void onResponseAck(JSONObject jsonObject) {
           Log.e("onResponseAck","jsonObject=="+jsonObject.toString());
+
+
             bluedetail_ackresponse.setText("Ack=="+jsonObject.toString());
+            try {
+                int cmd=jsonObject.getInt("ackCMD");
+                int status=jsonObject.getInt("status");
+                if(cmd==14) {
+                    Toast.makeText(DeviceDetailActivity.this,"按设备的entry键（key5）进行bind",Toast.LENGTH_SHORT).show();
+                }
+
+                if(cmd==16) {
+                    Toast.makeText(DeviceDetailActivity.this,"设备bind成功",Toast.LENGTH_SHORT).show();
+                }
+                if(cmd==7) {
+                    if(status==0)
+                    Toast.makeText(DeviceDetailActivity.this,"按设备的entry键（key5）进行unbind",Toast.LENGTH_SHORT).show();
+                }
+                if(cmd==9) {
+                    if(status==0)
+                        Toast.makeText(DeviceDetailActivity.this,"开锁成功",Toast.LENGTH_SHORT).show();
+                }
+                if(cmd==18) {
+                    Toast.makeText(DeviceDetailActivity.this,"设备unbind成功",Toast.LENGTH_SHORT).show();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
         }
 
     };
@@ -205,7 +235,8 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             @Override
             public void onStartFailure(int errorCode) {
                 super.onStartFailure(errorCode);
-                Log.e(TAG, "onStartFailure errorCode" + errorCode);//返回的错误码
+
+                Log.e("onResponseAck", "onStartFailure errorCode" + errorCode);//返回的错误码
                 if (errorCode == ADVERTISE_FAILED_DATA_TOO_LARGE) {
                     Toast.makeText(DeviceDetailActivity.this, "数据大于31个字节", Toast.LENGTH_LONG).show();
                     Log.e(TAG, "数据大于31个字节");
@@ -376,6 +407,8 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
             super.onDestroy();
             //停止蓝牙广播
             stopAdvertise();
+            ClientManager.getClient().stopSearch();
+
         }
 
         private void stopAdvertise() {
@@ -406,12 +439,12 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
                     ClientManager.getClient().unlock(mac, "", mAdvertiseCallback);
 
-                    handler.postDelayed(new Runnable() {
+                    /*handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             stopAdvertise();
                         }
-                    }, 3000);
+                    }, 3000);*/
 
                 /*//开启蓝牙广播  一个是广播设置参数，一个是广播数据，还有一个是Callback
                 String unloca_pwds=put_pwd.getText().toString().trim();
@@ -437,14 +470,16 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
 
                     break;
                 case R.id.bluedetail_unbind:
+                    if (mBluetoothLeAdvertiser == null)
+                        mBluetoothLeAdvertiser = BluetoothUtils.getBluetoothLeAdvertiser();
                     ClientManager.getClient().unbind(mac,"",mAdvertiseCallback);
 
-                    handler.postDelayed(new Runnable() {
+                    /*handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             stopAdvertise();
                         }
-                    },3000);
+                    },3000);*/
                     break;
                 case R.id.bluedetail_bind:
                     if (mBluetoothLeAdvertiser == null)
@@ -458,12 +493,12 @@ public class DeviceDetailActivity extends AppCompatActivity implements View.OnCl
                     // mBluetoothLeAdvertiser.startAdvertising(createAdvSettings(true, 10), setPwdData(pwds,mac), mAdvertiseCallback);
                       ClientManager.getClient().bind(mac,"",mAdvertiseCallback);
 
-                handler.postDelayed(new Runnable() {
+                /*handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         stopAdvertise();
                     }
-                },3000);
+                },3000);*/
 
                     break;
                 case R.id.bluedetail_closeadvertise:

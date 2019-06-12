@@ -233,4 +233,9 @@ public class BluetoothClient implements IBluetoothClient {
     public void unbind(String mac,String pwd, AdvertiseCallback advertiseCallback) {
         mClient.unbind( mac, pwd,advertiseCallback);
     }
+    @Override
+    public void notifybind(String mac,String pwd, AdvertiseCallback advertiseCallback) {
+        mClient.notifybind( mac, pwd,advertiseCallback);
+    }
+
 }

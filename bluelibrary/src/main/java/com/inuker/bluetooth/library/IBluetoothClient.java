@@ -72,4 +72,8 @@ public interface IBluetoothClient {
 
     void bind(String mac,String pwd, AdvertiseCallback advertiseCallback);
     void unbind(String mac,String pwd, AdvertiseCallback advertiseCallback);
+
+   void notifybind(String mac,String pwd, AdvertiseCallback advertiseCallback);
+
+
 }

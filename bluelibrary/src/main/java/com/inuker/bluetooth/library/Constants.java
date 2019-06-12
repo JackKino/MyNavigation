@@ -132,11 +132,19 @@ public class Constants {
     public static final int lcChangeDevPinCodeReq = 0x10; // to change pin code in device side.
     public static final int lcChangeDevPinCodeAck = 0x11; // ack.
     // device req to phone,
-    public static final int lcDevBusyReq = 0x12; // device to phone side.
-    public static final int lcDevBusyAck = 0x13; // phone to device side.
-    public static final int lcDevBatLevelReq = 0x14; // device to phone side.
-    public static final int lcDevBatLevelAck = 0x15; // phone to device side.
-    public static final int lcReqRspMax = 0x16;
+    //public static final int lcDevBusyReq = 0x12; // device to phone side.
+    //public static final int lcDevBusyAck = 0x13; // phone to device side.
+    public static final int lcDevBusyReq = 0x14; // device to phone side.
+    public static final int lcDevBusyAck = 0x15; // phone to device side.
+    public static final int lcDevBindCfmReq = 0x16;// dev -> phone side / confirm bind.
+    public static final int lcDevBindCfmAck = 0x17;// phone to dev side.
+    public static final int lcDevUnbindCfmReq = 0x18;// dev -> phone side / confirm unbind.
+    public static final int lcDevUnbindCfmAck = 0x19;// phone -> dev side.
+    public static final int lcDevSetPinCfmReq = 0x20;// dev -> phone side / confirm change pin.
+    public static final int lcDevSetPinCfmAck = 0x21;// phone -> dev side.
+
+
+
 
     //用户权限
     public static final int permAdm=0x00;
